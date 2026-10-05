@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { Medicine } from "./types";
 import { Link } from "react-router-dom";
 import "./App.css";
+const cache: { [key: string]: Medicine[] } = {};
+
 
 function App() {
 const [search, setSearch] = useState("");
@@ -9,29 +11,32 @@ const [medicines, setMedicines] = useState<Medicine[]>([]);
 const [loading, setLoading] = useState(false);
 
  useEffect(() => {
-   if (!search) return;
-const timer = setTimeout(async () => {
-      setLoading(true);
-
-     try {
-     const response = await fetch(
-      `https://api.fda.gov/drug/label.json?search=openfda.brand_name:${search}&limit=20`
-        );
-        if (!response.ok) {
-          setMedicines([]);
-          return;
-        }
-   const data = await response.json();
+  if (!search) return;
+if (cache[search]) {
+  setMedicines(cache[search]);
+  return;
+  }
+  const timer = setTimeout(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://api.fda.gov/drug/label.json?search=openfda.brand_name:${search}&limit=20`
+      );
+      if (!response.ok) {
+     setMedicines([]);
+      return;
+  }
+      const data = await response.json();
+  cache[search] = data.results || [];
       setMedicines(data.results || []);
-      } catch {
-        setMedicines([]);
-      }
-      setLoading(false);
-    }, 400);
+    } catch {
+      setMedicines([]);
+    }
+setLoading(false);
+  }, 400);
 
-    return () => clearTimeout(timer);
-  }, [search]);
-
+  return () => clearTimeout(timer);
+}, [search]);
   return (
     <div className="app">
       <h1>Medicine Search</h1>
@@ -48,7 +53,8 @@ const timer = setTimeout(async () => {
 
     <div className="results">
       {medicines.map((medicine, index) => (
-        <Link to={`/medicine/${index}`} state={{ medicine }} className="card" key={index} >
+       <Link
+  to={`/medicine/${index}`} className="card" key={index}  onClick={() =>localStorage.setItem("medicine", JSON.stringify(medicine)) }>
           <h2>{medicine.openfda?.brand_name?.[0]}</h2>
           <p>Generic: {medicine.openfda?.generic_name?.[0] || "N/A"}</p>
           <p>

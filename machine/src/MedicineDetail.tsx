@@ -1,10 +1,9 @@
-import { useLocation, Link } from "react-router-dom";
 import type { Medicine } from "./types";
+import { Link } from "react-router-dom";
 
 function MedicineDetail() {
-  const location = useLocation();
-  const medicine = location.state?.medicine as Medicine;
-
+ const medicine = JSON.parse(
+  localStorage.getItem("medicine") || "null") as Medicine;
   if (!medicine) {
     return (
       <div className="app">
