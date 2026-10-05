@@ -52,21 +52,31 @@ setLoading(false);
       )}
 
     <div className="results">
-      {medicines.map((medicine, index) => (
-       <Link
-  to={`/medicine/${index}`} className="card" key={index}  onClick={() =>localStorage.setItem("medicine", JSON.stringify(medicine)) }>
-          <h2>{medicine.openfda?.brand_name?.[0]}</h2>
-          <p>Generic: {medicine.openfda?.generic_name?.[0] || "N/A"}</p>
-          <p>
-            Manufacturer: {medicine.openfda?.manufacturer_name?.[0] || "N/A"}
-          </p>
-          <p>
-            Product Type: {medicine.openfda?.product_type?.[0] || "N/A"}
-          </p>
-          <p>Route: {medicine.openfda?.route?.[0] || "N/A"}</p>
-        </Link>
-      ))}
-    </div>
+  {medicines.map((medicine, index) => (
+    <Link
+      to={`/medicine/${index}`}
+      key={index}
+      onClick={() =>
+        localStorage.setItem("medicine", JSON.stringify(medicine))
+      }
+    >
+      <h2>{medicine.openfda?.brand_name?.[0]}</h2>
+      <p>
+        Generic: {medicine.openfda?.generic_name?.[0] || "N/A"}
+      </p>
+      <p>     Manufacturer:{" "}
+   {medicine.openfda?.manufacturer_name?.[0] || "N/A"}</p>
+    <p>    Product Type:{" "}
+    {medicine.openfda?.product_type?.[0] || "N/A"}
+      </p>
+   <p>
+     How to take {medicine.openfda?.route?.[0] || "N/A"}
+  </p>
+
+      <hr />
+    </Link>
+  ))}
+</div>
     </div>
   );
 }
