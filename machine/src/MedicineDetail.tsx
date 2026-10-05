@@ -33,7 +33,7 @@ function MedicineDetail() {
        {openfda?.product_type?.[0] || "N/A"}
      </p>
      <p>
-       <strong>how to take :</strong>{" "}
+       <strong>How to take :</strong>{" "}
       {openfda?.route?.[0] || "N/A"}
     </p>
    </div>
