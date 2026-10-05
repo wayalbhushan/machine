@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Medicine } from "./types";
+import { Link } from "react-router-dom";
 import "./App.css";
 
 function App() {
@@ -45,31 +46,21 @@ const timer = setTimeout(async () => {
         <p>No results</p>
       )}
 
-      <div className="results">
-        {medicines.map((medicine, index) => (
-          <div className="card" key={index}>
-            <h2>{medicine.openfda?.brand_name?.[0]}</h2>
-
-            <p>
-              Generic: {medicine.openfda?.generic_name?.[0] || "N/A"}
-            </p>
-
-            <p>
-              Manufacturer:{" "}
-              {medicine.openfda?.manufacturer_name?.[0] || "N/A"}
-            </p>
-
-            <p>
-              Product Type:{" "}
-              {medicine.openfda?.product_type?.[0] || "N/A"}
-            </p>
-
-            <p>
-              Route: {medicine.openfda?.route?.[0] || "N/A"}
-            </p>
-          </div>
-        ))}
-      </div>
+    <div className="results">
+      {medicines.map((medicine, index) => (
+        <Link to={`/medicine/${index}`} state={{ medicine }} className="card" key={index} >
+          <h2>{medicine.openfda?.brand_name?.[0]}</h2>
+          <p>Generic: {medicine.openfda?.generic_name?.[0] || "N/A"}</p>
+          <p>
+            Manufacturer: {medicine.openfda?.manufacturer_name?.[0] || "N/A"}
+          </p>
+          <p>
+            Product Type: {medicine.openfda?.product_type?.[0] || "N/A"}
+          </p>
+          <p>Route: {medicine.openfda?.route?.[0] || "N/A"}</p>
+        </Link>
+      ))}
+    </div>
     </div>
   );
 }
