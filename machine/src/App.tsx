@@ -50,7 +50,7 @@ function App() {
         setMedicines(results);
       } catch {
         setMedicines([]);
-        setError("Something went wrong while loading medicines.");
+        setError("Something went wrong ");
       } finally {
         setLoading(false);
       }
@@ -70,10 +70,10 @@ function App() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {loading && <p>Loading...</p>}
+      {loading && <p>Loading</p>}
       {error && <p>{error}</p>}
       {!loading && !error && search.trim() && medicines.length === 0 && (
-        <p>No results</p>
+        <p>No results found</p>
       )}
 
       <div className="results">
