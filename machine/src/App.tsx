@@ -10,20 +10,21 @@ function App() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
-    const trimmedSearch = search.trim();
-
-    if (!trimmedSearch) {
+    const trimmed = search.trim();
+    if (!trimmed) {
       setMedicines([]);
       setError(null);
       return;
     }
 
-    const query = trimmedSearch.toLowerCase();
+    const q = trimmed.toLowerCase();
 
-    if (cache[query]) {
-      setMedicines(cache[query]);
+
+    if (cache[q]) {
+      setMedicines(cache[q]);
       setError(null);
       setLoading(false);
       return;
@@ -32,25 +33,26 @@ function App() {
     const timer = setTimeout(async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const response = await fetch(
-        `https://api.fda.gov/drug/label.json?search=openfda.brand_name:${encodeURIComponent(query)}&limit=20`
+        const resp = await fetch(
+          `https://api.fda.gov/drug/label.json?search=openfda.brand_name:${encodeURIComponent(
+            q
+          )}&limit=20`
         );
-      if (!response.ok) {
-      setMedicines([]);
-     setError("Error occured");
+      setRecentSearches((prev) => [q, ...prev.filter((s) => s !== q)].slice(0, 5));
+
+        if (!resp.ok) {
+          setMedicines([]);
+          setError("Error occurred");
           return;
         }
-
-    const data = (await response.json()) as { results?: Medicine[] };
-  const results = data.results ?? [];
-
-        cache[query] = results;
+        const data = (await resp.json()) as { results?: Medicine[] };
+        const results = data.results ?? [];
+        cache[q] = results;
         setMedicines(results);
       } catch {
         setMedicines([]);
-        setError("Something went wrong ");
+        setError("Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -70,20 +72,34 @@ function App() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
+      {recentSearches.length > 0 && (
+        <div className="recent-searches">
+          {recentSearches.map((item) => (
+            <button
+              key={item}
+              onClick={() => {
+                setSearch(item);
+                setRecentSearches((prev) => [item, ...prev.filter((s) => s !== item)].slice(0, 5));
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )} 
+
       {loading && <p>Loading</p>}
       {error && <p>{error}</p>}
-      {!loading && !error && search.trim() && medicines.length === 0 && (
+      {!loading && !error && search && medicines.length === 0 && (
         <p>No results found</p>
       )}
 
       <div className="results">
-        {medicines.map((medicine, index) => (
+        {medicines.map((medicine, idx) => (
           <Link
-            to={`/medicine/${index}`}
-            key={index}
-            onClick={() =>
-              localStorage.setItem("medicine", JSON.stringify(medicine))
-            }
+            to={`/medicine/${idx}`}
+            key={idx}
+            onClick={() => localStorage.setItem("medicine", JSON.stringify(medicine))}
           >
             <h2>{medicine.openfda?.brand_name?.[0] ?? "Unknown brand"}</h2>
             <p>Generic: {medicine.openfda?.generic_name?.[0] || "N/A"}</p>
