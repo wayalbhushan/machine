@@ -1,0 +1,28 @@
+name: KorelexOne AI check
+
+# Runs on every commit to the main branch, every pull request, and on demand.
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read          # read the code
+  actions: read           # needed by the code scanning upload on private repositories
+  security-events: write  # show findings on the lines of the pull request
+
+jobs:
+  ai-check:
+    name: AI check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: korelex/aibom@bccd45c26926fc2dcb47ef4614189eb29cc7c402
+        with:
+          fail-on: "high"  # empty = report only, high = fail the check
+          output: ${{ runner.temp }}/aibom-out
