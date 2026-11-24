@@ -1,5 +1,4 @@
 name: KorelexOne AI check (P5 test copy)
-
 # P5 test copy: runs only when started by hand. Characters that a link must carry intact: & % + = ? # ' " \ ~
 on:
   workflow_dispatch:
