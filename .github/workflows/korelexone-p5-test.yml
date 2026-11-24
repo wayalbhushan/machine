@@ -1,0 +1,32 @@
+name: KorelexOne AI check (P5 test copy)
+
+# P5 test copy: runs only when started by hand. Characters that a link must carry intact: & % + = ? # ' " \ ~
+on:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    name: AI check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: korelex/aibom@bccd45c26926fc2dcb47ef4614189eb29cc7c402
+        with:
+          fail-on: ""  # empty = just tell us, high = fail on high risks
+          output: ${{ runner.temp }}/aibom-out
+
+  report:
+    name: Send findings to KorelexOne
+    needs: scan
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - run: echo "P5 test copy. The real report step is pinned by commit (ADR-021)."
