@@ -1,0 +1,67 @@
+name: KorelexOne P6 identity test
+
+# P6 test, safe to delete. It never prints, saves or sends a token: GitHub's pass is checked on this runner and only
+# what it says (repository, branch, event, workflow) is printed in the log.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Can this job get GitHub's pass?
+        run: |
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then echo "P6-SCAN-JOB token-available=true"; else echo "P6-SCAN-JOB token-available=false"; fi
+      - name: Write a stand-in result
+        run: |
+          echo '{"stand_in": "result", "run": "${{ github.run_id }}"}' > result.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: p6-result
+          path: result.json
+
+  report:
+    needs: scan
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: p6-result
+      - name: Can this job read the scan job's result?
+        run: |
+          if [ -f result.json ]; then echo "P6-REPORT-JOB artifact-read=true sha256=$(sha256sum result.json | cut -c1-16)"; else echo "P6-REPORT-JOB artifact-read=false"; fi
+      - name: Check GitHub's pass and print only what it says
+        run: |
+          python -m pip install --quiet --disable-pip-version-check "pyjwt[crypto]==2.15.1"
+          python - <<'PY'
+          import json, os, urllib.request
+          import jwt
+          AUD = "https://one.korelex.ai/ci/p6-test-binding"
+          req = urllib.request.Request(os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=" + AUD,
+                                       headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]})
+          token = json.load(urllib.request.urlopen(req))["value"]
+          keys = jwt.PyJWKClient("https://token.actions.githubusercontent.com/.well-known/jwks")
+          claims = jwt.decode(token, keys.get_signing_key_from_jwt(token).key, algorithms=["RS256"], audience=AUD,
+                              issuer="https://token.actions.githubusercontent.com")
+          wrong = "not checked"
+          try:
+              jwt.decode(token, keys.get_signing_key_from_jwt(token).key, algorithms=["RS256"], audience="https://one.korelex.ai/ci/other",
+                         issuer="https://token.actions.githubusercontent.com")
+              wrong = "ACCEPTED"
+          except jwt.InvalidAudienceError:
+              wrong = "refused"
+          del token
+          keep = ("iss", "aud", "sub", "repository", "repository_id", "repository_owner", "repository_owner_id", "repository_visibility",
+                  "ref", "ref_type", "sha", "event_name", "workflow_ref", "job_workflow_ref", "base_ref", "head_ref",
+                  "runner_environment", "actor", "run_id", "iat", "exp", "jti")
+          print("P6-CLAIMS " + json.dumps({k: claims.get(k) for k in keep}, sort_keys=True))
+          print("P6-SIGNATURE verified=true other-audience=" + wrong)
+          PY
